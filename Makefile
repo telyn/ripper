@@ -11,7 +11,7 @@ deb: $(TOOLS)
 	checkinstall  --install=no --pkgname=telyn-ripper --pkgversion="0.1-$(VERSION)"  --requires="bash,libdvdcss2,handbrake-cli,cdparanoia,abcde,lame,id3,id3v2,incron" 
 
 install: $(TOOLS)
-	mkdir -p /opt/ripper
+	mkdir -p /opt/ripper /etc/incron.d
 	cp $(TOOLS) /opt/ripper
 	echo "/dev/sr0 IN_ATTRIB /opt/ripper/ripwrap" > /etc/incron.d/ripper
 
