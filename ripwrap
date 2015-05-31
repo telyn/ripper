@@ -1,0 +1,7 @@
+#!/bin/bash
+if ! /opt/ripper/istrayopen /dev/sr0; then
+    echo -e "\n=====Disk inserted=====\n" >> /var/log/rip.log
+    exec /opt/ripper/rip >> /var/log/rip.log 2>&1
+else
+    echo -e "\n=====Disk ejected=====\n" >> /var/log/rip.log
+fi

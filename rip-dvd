@@ -1,0 +1,43 @@
+#!/bin/bash
+
+ENCODINGARGS="--optimize --large-file --encoder x264 --encopts level=4.1:deblock=-1,-1:psy-rd=1.00,0.15:vbv-bufsize=78125:vbv-maxrate=62500 --vb 1250 --two-pass --turbo --aencoder copy:* -Y 720 --normalize-mix 1 -N eng --native-dub -s scan --subtitle-forced --subtitle-burned"
+
+NAME=$1
+OUTFILE=/store/shared/ripped/$NAME.mp4
+LOG=/store/shared/ripped/$NAME.log
+#TITLES=$(vobcopy -I 2>&1 | grep -P "Title [0-9]+ has [1-9][0-9]* chapters." | sed "s/.*Title \([0-9]\+\).*/\1/")
+#HandBrakeCLI -i /mnt -t 0 --min-duration 1200
+
+#future: rip the main feature and anything longer than 20 mins
+HandBrakeCLI -i /dev/sr0 --main-feature $ENCODINGARGS -o "$OUTFILE" >"$LOG" 2>"$LOG"
+
+/opt/ripper/striplog "$LOG" > "$LOG.stripped"
+rm "$LOG"
+mv "$LOG.stripped" "$LOG"
+
+if [ $? -gt 0 ] ; then
+    echo "Failed rip."
+cat <<END | mutt -a "$LOG" -s "DVD rip of $NAME failed!" -- monitor
+Bad tidings, bros,
+
+I tried to rip $NAME using HandBrake but it failed. I've attached the log file so you can see what's up.
+
+Bridgmanite
+END
+else
+    STORAGE=$(df -h | grep /store | sed "s/ \+/ /g" | cut -d' ' -f 2)
+cat <<END | mutt -a "$LOG" -s "Finished ripping $NAME!" -- monitor
+Hey folks,
+
+Who has $STORAGE of storage and just ripped a DVD? This guy! 
+
+I totally just smashed that DVD into the ground, man. Have a watch at $OUTFILE, check the attached log, and pick the DVD out of my tray when you're ready
+
+See you losers around!
+
+Bridgmanite
+END
+    echo "Rip succeeded to $OUTFILE"
+fi
+
+rm -f "$LOG"

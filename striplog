@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+while(<>) {
+	s/^[^\r]*\r.*\r([^\r]*)$/$1\n/;
+
+	print $_
+}

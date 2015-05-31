@@ -1,0 +1,177 @@
+#!/bin/bash
+
+mount_failed_email() {
+    NAME=$1
+    cat <<END |  mail -s "$NAME CD/DVD rip failed on bridgmanite" monitor
+A CD/DVD called "$NAME" was inserted that could not be mounted. Clean the disk and try again? Have a little cry perhaps.
+
+I'd be sorry about it but I am just a machine. I still love you though,
+
+bridgmanite
+END
+}
+
+dvd_started_email() {
+    NAME=$1
+    cat <<END |  mail -s "Ripping a DVD called $NAME" monitor
+What's up telyn/gareth/renny?
+
+One of you just put a DVD in me called $NAME!
+
+I'll get that ripped for you right away and email you when I'm done
+
+Big love!!
+ 
+Bridgmanite
+END
+}
+
+cd_started_email() {
+    NAME=$1
+    cat <<END |  mail -s "Ripping a CD called $NAME" monitor
+What's up telyn/gareth/renny?
+
+One of you just put a CD in me called $NAME!
+
+I'll get that ripped for you right away and email you when I'm done with all the tags I put on it shit
+
+Big love!!
+ 
+Bridgmanite
+END
+}
+
+unknown_media_email() {
+    NAME=$1
+    cat <<END |  mail -s "Can't rip $NAME because it sucks" monitor
+Bad news, assholes,
+
+That optical disk you just put in me doesn't seem like an audio CD or a DVD film.
+
+Yours ungratefully,
+ 
+Bridgmanite
+END
+}
+
+cd_finished_email() {
+    NAME=$1
+    cat <<END |  mail -s "Ripped $NAME!" monitor
+To whom it may concern,
+
+Let it be known that I have summarily ripped the audio CD given to me.
+
+In Life it was called $NAME but it is now known only in memoriam.
+
+I'm Alex Jamal.
+ 
+Bridgmanite
+END
+}
+
+cd_failed_email() {
+    NAME=$1
+    cat <<END |  mail -s "Failed to rip $NAME!" monitor
+My Lords,
+
+I am most terribly sorry but I have failed you this day! For the CD known as $NAME, I was unable to rip.
+
+Please don't put me in a shredder.
+
+Bridgmanite
+END
+
+}
+cd_no_audio_email() {
+    NAME=$1
+    cat <<END |  mail -s "That CD got no audio" monitor
+Oi,
+
+That CD didn't have any bleedin audio in. Do me a favour!
+
+Stick an audio CD in next time ya pillock
+
+Bridgmanite
+END
+
+}
+dvd_no_video_email() {
+    NAME=$1
+    cat <<END |  mail -s "That DVD ain't got video" monitor
+Oi,
+
+That DVD didn't have any fucking video in you muppet. The skipper said I shouldn't work with you
+
+Stick a DVD what actually has video in next time ya twonk
+
+Bridgmanite
+END
+}
+
+unknown_media_email() {
+    NAME=$1
+    cat <<END |  mail -s "Unknown media in optical disk drive" monitor
+???
+
+What that?
+
+Don't understand
+
+
+help
+
+Bridgmanite
+END
+}
+
+try_cd() {
+    AUDIO_TRACKS=`udevadm info /dev/cdrom | grep -oP "ID_CDROM_MEDIA_TRACK_COUNT_AUDIO=[[:digit:]]" | grep -oP "[^=]$"`
+    if [ ! -z "$AUDIO_TRACKS" ] && [ $AUDIO_TRACKS -gt 0 ]; then
+	echo "It's an audio CD!"
+	cd_started_email $NAME
+	abcde
+	if [ $? -gt 0 ]; then
+	    cd_finished_email $NAME
+	    exit 0
+	else
+	    cd_failed_email $NAME
+	    exit 1
+	fi
+    fi
+    return 1
+}
+
+
+find_name() {
+    BLKID=`blkid /dev/sr0` 
+    BLKID_RESULT=$?
+    NAME=`echo $BLKID | grep -oP "LABEL=\"[^\"]*" | sed "s/^LABEL=\"//"`
+
+    if (($BLKID_RESULT == 2 )); then
+	NAME=`file -s /dev/sr0 | sed "s/^.*UDF filesystem data ([^)]\+) '\([^']\+\)'/\1/"`
+	if [ $? -gt 0 ] ; then
+	    NAME=`cd-discid | cut -d' ' -f 1` 
+	    if [ $? -gt 0 ] ; then
+		echo "COULDN'T READ NAME, retrying in 10 seconds"
+		sleep 10
+		find_name
+	    else
+		try_cd
+	    fi
+	fi
+    fi
+}
+
+NAME="Unknown Disk `uuid`"
+find_name
+echo "Disk name: $NAME"
+
+if echo `file -s /dev/sr0` | grep UDF; then
+	echo "Media type: DVD/SACD Video"
+	dvd_started_email $NAME
+	/opt/ripper/rip-dvd $NAME    
+fi
+echo "Operations complete, unmounting & ejecting."
+umount /dev/sr0
+sleep 5
+eject 
