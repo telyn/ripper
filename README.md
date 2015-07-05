@@ -1,4 +1,4 @@
-![](https://build.aetheria.co.uk/buildStatus/icon?job=node-jrc)
+![](https://build.aetheria.co.uk/buildStatus/icon?job=ripper)
 
 Ripper: Auto-detecting media-ripping tool
 =========================================
