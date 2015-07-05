@@ -158,6 +158,8 @@ find_name() {
 	    else
 		try_cd
 	    fi
+	else
+	    try_cd
 	fi
     fi
 }
